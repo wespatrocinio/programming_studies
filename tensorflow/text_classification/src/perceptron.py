@@ -5,16 +5,16 @@ import tensorflow as tf
 def get_weights(n_input, n_hidden_1, n_hidden_2, n_classes):
     """ Generate all weights based on the NN settings. """
     return {
-        'h1': tf.Variable(tf.random_normal([n_input, n_hidden_1])),
-        'h2': tf.Variable(tf.random_normal([n_hidden_1, n_hidden_2])),
+        'h0': tf.Variable(tf.random_normal([n_input, n_hidden_1])),
+        'h1': tf.Variable(tf.random_normal([n_hidden_1, n_hidden_2])),
         'out': tf.Variable(tf.random_normal([n_hidden_2, n_classes]))
     }
 
 def get_biases(n_hidden_1, n_hidden_2, n_classes):
     """ Generate all biases based on the NN settings. """
     return {
-        'b1': tf.Variable(tf.random_normal([n_hidden_1])),
-        'b2': tf.Variable(tf.random_normal([n_hidden_2])),
+        'h0': tf.Variable(tf.random_normal([n_hidden_1])),
+        'h1': tf.Variable(tf.random_normal([n_hidden_2])),
         'out': tf.Variable(tf.random_normal([n_classes]))
     }
 
@@ -26,13 +26,13 @@ def multilayer_perceptron(input_tensor, weights, biases):
     weights         Weights for each layer
     biases          Biases for each layer
     """
-    layer_1_multiplication = tf.matmul(input_tensor, weights['h1'])
-    layer_1_addition = tf.add(layer_1_multiplication, biases['b1'])
+    layer_1_multiplication = tf.matmul(input_tensor, weights['h0'])
+    layer_1_addition = tf.add(layer_1_multiplication, biases['h0'])
     layer_1_activation = tf.nn.relu(layer_1_addition)
 
     # Hidden layer with RELU activation
-    layer_2_multiplication = tf.matmul(layer_1_activation, weights['h2'])
-    layer_2_addition = tf.add(layer_2_multiplication, biases['b2'])
+    layer_2_multiplication = tf.matmul(layer_1_activation, weights['h1'])
+    layer_2_addition = tf.add(layer_2_multiplication, biases['h1'])
     layer_2_activation = tf.nn.relu(layer_2_addition)
 
     # Output layer with linear activiation

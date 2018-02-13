@@ -1,11 +1,14 @@
 # Perceptron settings
-N_HIDDEN_1 = 200    # 1st hidden layer number of features
-N_HIDDEN_2 = 200    # 2nd hidden layer number of features
+N_HIDDEN = 2
+SIZE_HIDDEN = {
+    'h0': 200,
+    'h1': 200
+}
 
 # Optimization settings
 LEARNING_RATE = 0.01
 MAX_TRAINING_EPOCHS = 10
-BATCH_SIZE = 300
+BATCH_SIZE = 1
 DISPLAY_STEP = 1
 
 # Dataset settings

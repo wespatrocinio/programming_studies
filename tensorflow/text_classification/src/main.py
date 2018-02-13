@@ -1,3 +1,5 @@
+from classifier.nn import Perceptron
+
 from data import get_train_test_data
 from features import *
 from settings import *
@@ -32,10 +34,8 @@ if __name__ == '__main__':
     input_tensor = tf.placeholder(tf.float32, [None, n_input], name="input")
     output_tensor = tf.placeholder(tf.float32, [None, len(DATA_CATEGORIES)], name="output")
 
-    weights = get_weights(n_input, N_HIDDEN_1, N_HIDDEN_2, len(DATA_CATEGORIES))
-    biases = get_biases(N_HIDDEN_1, N_HIDDEN_2, len(DATA_CATEGORIES))
-
-    prediction = multilayer_perceptron(input_tensor, weights, biases)
+    nn = Perceptron(n_input, len(DATA_CATEGORIES), N_HIDDEN, SIZE_HIDDEN)
+    prediction = nn.predict(input_tensor)
 
     loss = get_entropy_loss(prediction, output_tensor)
     optimizer = get_optimizer(loss, LEARNING_RATE)
@@ -50,6 +50,7 @@ if __name__ == '__main__':
         # Training cycle
         for epoch in range(training_epochs):
             avg_cost = 0
+            BATCH_SIZE = len(train_text.data)
             total_batch = int(len(train_text.data) / BATCH_SIZE)
             # Loop over all batches
             for i in range(total_batch):
