@@ -50,7 +50,6 @@ if __name__ == '__main__':
         # Training cycle
         for epoch in range(training_epochs):
             avg_cost = 0
-            BATCH_SIZE = len(train_text.data)
             total_batch = int(len(train_text.data) / BATCH_SIZE)
             # Loop over all batches
             for i in range(total_batch):

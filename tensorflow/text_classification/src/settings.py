@@ -8,7 +8,7 @@ SIZE_HIDDEN = {
 # Optimization settings
 LEARNING_RATE = 0.01
 MAX_TRAINING_EPOCHS = 10
-BATCH_SIZE = 1
+BATCH_SIZE = 500
 DISPLAY_STEP = 1
 
 # Dataset settings
