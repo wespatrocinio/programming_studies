@@ -10,60 +10,62 @@ class Model(object):
         self.train_target = train_target
         self.test_data = test_data
         self.test_target = test_target
+        self.tf_session = tf.Session()
 
-    def train(self, input_tensor, output_tensor):
-        loss = self.get_entropy_loss(self.classifier.predict(input_tensor), output_tensor)
-        optimizer = self.get_optimizer(loss, self.parameters.get('learning_rate'))
+    def train(self, input_tensor, output_tensor, batch=True, batch_size=200):
+        loss = self._get_entropy_loss(self.classifier.predict(input_tensor), output_tensor)
+        optimizer = self._get_optimizer(loss, self.parameters.get('learning_rate'))
 
         # Initializing the variables
         init = tf.global_variables_initializer()
 
         training_epochs = 10
         # Launch the graph
-        with tf.Session() as session:
-            session.run(init) # inits the variables
-            # Training cycle
-            epoch = 0
-            cost = 1 # Any value bigger than the threshold
-            while cost > 0.01 or epoch <= training_epochs: # TODO: parameterize the cost threshold
-                cost, _ = session.run(
+        self.tf_session.run(init) # inits the variables
+        # Training cycle
+        for epoch in range(training_epochs):
+            avg_cost = 0
+            total_batch = int(len(self.train_data) / batch_size)
+            # Loop over all batches
+            for i in range(total_batch):
+                batch_x, batch_y = self._get_batch(self.train_data, self.train_target, i, batch_size)
+                # Run optimization op (back propagation) and cost optimization
+                c, _ = self.tf_session.run(
                     [loss, optimizer],
                     feed_dict={
-                        input_tensor: np.array(self.train_data),
-                        output_tensor: np.array(self.train_target)
+                        input_tensor: batch_x,
+                        output_tensor: batch_y
                     }
                 )
-                # Display logs per epoch step
-                print("Epoch", '%04d' % (epoch + 1), "loss=", "{:.9f}".format(cost))
-            print("Optimization Finished!")
+                avg_cost += c / total_batch
+            # Display logs per epoch step
+            print("Epoch", '%04d' % (epoch + 1), "loss=", "{:.9f}".format(avg_cost))
+        print("Optimization Finished!")
         return True
     
-    def test(self):
-        pass
+    def test(self, input_tensor, output_tensor):
+        """ """
+        # Test model
+        correct_prediction = tf.equal(
+            tf.argmax(self.classifier.predict(input_tensor), 1),
+            tf.argmax(output_tensor, 1)
+        )
+        # Calculate accuracy
+        accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
+        batch_x_test, batch_y_test = self._get_batch(self.test_data, self.test_target, 0, len(self.test_data))
+        print("Accuracy:", accuracy.eval({input_tensor: batch_x_test, output_tensor: batch_y_test}, session=self.tf_session))
     
-    # def get_batch(data, target, word2index, input_size, iteration, batch_size):
-    #     """ Defines the size of each batch to be processed. """
-    #     batches = []
-    #     results = []
-    #     texts = data[iteration * batch_size : iteration * batch_size + batch_size]
-    #     categories = target[iteration * batch_size : iteration * batch_size + batch_size]
-    #     for text in texts:
-    #         layer = np.zeros(input_size, dtype=float)
-    #         for token in get_tokens(text):
-    #             layer[word2index[token]] += 1
-    #         batches.append(layer)
-    #     for category in categories:
-    #         y = np.zeros(len(set(categories)), dtype=float)
-    #         y[category] = 1.0
-    #         results.append(y)
-        
-    #     return np.array(batches), np.array(results)
+    def _get_batch(self, data, target, iteration, batch_size):
+        """ Defines the size of each batch to be processed. """
+        input_batch = data[iteration * batch_size : iteration * batch_size + batch_size]
+        target_batch = target[iteration * batch_size : iteration * batch_size + batch_size] 
+        return np.array(input_batch), np.array(target_batch)
 
-    def get_entropy_loss(self, prediction, output_tensor):
+    def _get_entropy_loss(self, prediction, output_tensor):
         """ Calculate the mean loss based in the difference between the prediction and the ground truth. """
         entropy_loss = tf.nn.softmax_cross_entropy_with_logits(logits=prediction, labels=output_tensor)
         return tf.reduce_mean(entropy_loss)
 
-    def get_optimizer(self, loss, learning_rate):
+    def _get_optimizer(self, loss, learning_rate):
         """ Update all the variables bases on the Adaptive Moment Estimation (Adam) method. """
         return tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss)
