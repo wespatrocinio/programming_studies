@@ -11,9 +11,15 @@ class Model(object):
         self.test_data = test_data
         self.test_target = test_target
         self.tf_session = tf.Session()
+        self.input_tensor = tf.placeholder(
+            tf.float32,
+            [None, self.parameters.get('input_size')], name="input")
+        self.output_tensor = tf.placeholder(
+            tf.float32,
+            [None, self.parameters.get('output_size')], name="output")
 
-    def train(self, input_tensor, output_tensor, batch=True, batch_size=200):
-        loss = self._get_entropy_loss(self.classifier.predict(input_tensor), output_tensor)
+    def train(self, batch=True, batch_size=200):
+        loss = self._get_entropy_loss(self.classifier.predict(self.input_tensor), self.output_tensor)
         optimizer = self._get_optimizer(loss, self.parameters.get('learning_rate'))
 
         # Initializing the variables
@@ -33,8 +39,8 @@ class Model(object):
                 c, _ = self.tf_session.run(
                     [loss, optimizer],
                     feed_dict={
-                        input_tensor: batch_x,
-                        output_tensor: batch_y
+                        self.input_tensor: batch_x,
+                        self.output_tensor: batch_y
                     }
                 )
                 avg_cost += c / total_batch
@@ -43,17 +49,26 @@ class Model(object):
         print("Optimization Finished!")
         return True
     
-    def test(self, input_tensor, output_tensor):
+    def test(self, input_data=None, output_target=None):
         """ """
         # Test model
         correct_prediction = tf.equal(
-            tf.argmax(self.classifier.predict(input_tensor), 1),
-            tf.argmax(output_tensor, 1)
+            tf.argmax(self.classifier.predict(self.input_tensor), 1),
+            tf.argmax(self.output_tensor, 1)
         )
         # Calculate accuracy
         accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
-        batch_x_test, batch_y_test = self._get_batch(self.test_data, self.test_target, 0, len(self.test_data))
-        print("Accuracy:", accuracy.eval({input_tensor: batch_x_test, output_tensor: batch_y_test}, session=self.tf_session))
+        if (input_data is None) and (output_target is None):
+            batch_x_test, batch_y_test = self._get_batch(self.test_data, self.test_target, 0, len(self.test_data))
+        else:
+            batch_x_test, batch_y_test = self._get_batch(input_data, output_target, 0, len(input_data))
+        print(
+            "Accuracy:",
+            accuracy.eval(
+                {self.input_tensor: batch_x_test, self.output_tensor: batch_y_test},
+                session=self.tf_session
+            )
+        )
     
     def _get_batch(self, data, target, iteration, batch_size):
         """ Defines the size of each batch to be processed. """

@@ -20,17 +20,16 @@ if __name__ == '__main__':
     test_data = data.transform_input(test_text.data)
     test_target = data.transform_output(test_text.target)
 
-    input_tensor = tf.placeholder(tf.float32, [None, data.get_vocab_length()], name="input")
-    output_tensor = tf.placeholder(tf.float32, [None, len(DATA_CATEGORIES)], name="output")
-
     nn = Perceptron(data.get_vocab_length(), len(data.target_classes), N_HIDDEN, SIZE_HIDDEN)
 
     parameters = {
+        'input_size': data.get_vocab_length(),
+        'output_size': len(data.target_classes),
         'learning_rate': LEARNING_RATE,
         'loss_threshold': 0.01
     }
 
     model = Model(nn, parameters, train_data, train_target, test_data, test_target)
 
-    model.train(input_tensor, output_tensor)
-    model.test(input_tensor, output_tensor)
+    model.train()
+    model.test()
